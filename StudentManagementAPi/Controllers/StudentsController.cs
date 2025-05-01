@@ -26,10 +26,33 @@ namespace StudentManagementAPi.Controllers
             _environment = environment;
         }
 
-        // GET: api/Students
+        //// GET: api/Students
+        //[HttpGet]
+        //public async Task<ActionResult<IEnumerable<StudentDto>>> GetStudents()
+        //{
+        //    var students = await _context.Students
+        //        .Include(s => s.StudentSubjects)
+        //        .ThenInclude(ss => ss.Subject)
+        //        .Select(s => new StudentDto
+        //        {
+        //            UserId = s.UserId,
+        //            UserName = s.UserName,
+        //            PhoneNumber = s.PhoneNumber,
+        //            Gmail = s.Gmail,
+        //            Address = s.Address,
+        //            ImagePath = s.ImagePath,
+        //            SubjectIds = s.StudentSubjects.Select(ss => ss.SubjectId).ToList(),
+        //            SubjectNames = s.StudentSubjects.Select(ss => ss.Subject.SubjectName).ToList()
+        //        })
+        //        .ToListAsync();
+
+        //    return students;
+        //}
         [HttpGet]
         public async Task<ActionResult<IEnumerable<StudentDto>>> GetStudents()
         {
+            var baseUrl = $"{Request.Scheme}://{Request.Host}/"; // ✅ http://localhost:5000/
+
             var students = await _context.Students
                 .Include(s => s.StudentSubjects)
                 .ThenInclude(ss => ss.Subject)
@@ -40,7 +63,7 @@ namespace StudentManagementAPi.Controllers
                     PhoneNumber = s.PhoneNumber,
                     Gmail = s.Gmail,
                     Address = s.Address,
-                    ImagePath = s.ImagePath,
+                    ImagePath = string.IsNullOrEmpty(s.ImagePath)? null: baseUrl + s.ImagePath.Replace("\\", "/"), // ✅ Full public URL
                     SubjectIds = s.StudentSubjects.Select(ss => ss.SubjectId).ToList(),
                     SubjectNames = s.StudentSubjects.Select(ss => ss.Subject.SubjectName).ToList()
                 })
@@ -48,6 +71,7 @@ namespace StudentManagementAPi.Controllers
 
             return students;
         }
+
 
         // GET: api/Students/5
         [HttpGet("{id}")]
@@ -250,6 +274,17 @@ namespace StudentManagementAPi.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+        [HttpGet("GetSubjects")]
+        public async Task<ActionResult<IEnumerable<Subject>>> GetSubjects()
+        {
+            return await _context.Subjects.ToListAsync();
+        }
+
+        [HttpGet("GetAllStudents")]
+        public async Task<ActionResult<IEnumerable<StudentDto>>> GetAllStudents()
+        {
+            return await GetStudents();
         }
 
         private bool StudentExists(int id)
